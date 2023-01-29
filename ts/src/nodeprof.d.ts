@@ -20,7 +20,9 @@ export interface ExceptionVal {
 }
 
 export type Accessor = string | number;
-export type Receiver = Object;
+export interface Receiver {
+    [index: Accessor]: any,
+}
 export type Invoked = Function;
 
 // for more info:
