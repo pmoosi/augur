@@ -787,7 +787,7 @@ export default abstract class JSMachine<V, F> implements AbstractMachine {
     private setMachineState(from: number, to: number) {
         this.functionTree.set(to, [...this.functionTree.get(from)]);
         this.taintTree.set(to, [...this.taintTree.get(from)]);
-        this.functionArgsTree.set(to, [...this.functionArgsTree.get(from)])
+        this.functionArgsTree.set(to, [...this.functionArgsTree.get(from)]);
     }
 
     public getTaint(): F[] {

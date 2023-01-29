@@ -24,6 +24,7 @@ import SourcedBooleanMachine from "../abstractMachine/SourcedBooleanMachine";
 import {readFileSync} from "fs";
 import MyLogger from "./mylogger";
 import {constants} from "crypto";
+import {number} from "yargs";
 
 
 // Load polyfills, incl. critical polyfills for Promise functions.
@@ -69,6 +70,8 @@ export default class Analysis implements Analyzer {
     private eventLoopOver: Boolean = false;
 
     private debugLogger: MyLogger = new MyLogger('/home/pmoosi/Documents/KTH/2023-ss/thesis/simple/debug.log');
+
+    private prototypeInjected: Map<number, boolean> = new Map();
 
     constructor(sandbox: Sandbox) {
         this.sandbox = sandbox;
@@ -169,7 +172,6 @@ export default class Analysis implements Analyzer {
     public getFieldPre: NPCallbacks.getFieldPre = (iid, receiver, offset, isComputed, isOpAssign, isMethodCall) => {
         const val = receiver[offset];
 
-        // this.debugLogger.log('post ' + JSON.stringify({receiver, isOpAssign, location: parseIID(iid)["fileName"]}));
         this.shadowMemory.initialize(receiver);
         this.state.readProperty([this.shadowMemory.getShadowID(receiver),
             offset as PropertyDescription,
@@ -177,32 +179,22 @@ export default class Analysis implements Analyzer {
             isComputed,
             {
                 type: (val === undefined ? "undefinedPropRead" : "expr"), // set type depending on value
+                // propAccessName: `${JSON.stringify(receiver)}[${JSON.stringify(offset)}]`,
                 location: parseIID(iid)
             }]);
 
-        if (val === undefined) {
-            receiver[offset] = 'prototypeInjected';
+        // inject some value for the read to simulate 'injection'
+        if (this.spec.injectPropertyVal !== undefined && val === undefined) {
+            receiver[offset] = this.spec.injectPropertyVal;
+            this.prototypeInjected.set(iid, true)
         }
     }
 
     public getField: NPCallbacks.getField = (iid, receiver, offset, val, isComputed, isOpAssign, isMethodCall) => {
-        // this.debugLogger.log('post ' + JSON.stringify({receiver, isOpAssign, location: parseIID(iid)["fileName"]}));
-        // this.shadowMemory.initialize(receiver);
-        // this.state.readProperty([this.shadowMemory.getShadowID(receiver),
-        //     offset as PropertyDescription,
-        //     isMethodCall,
-        //     isComputed,
-        //     {
-        //         type: (val === undefined ? "undefinedPropRead" : "expr"), // set type depending on value
-        //         location: parseIID(iid)
-        //     }]);
-        //
-        // if (val === undefined) {
-        //     receiver[offset] = '10';
-        // }
-
-        if (val === 'prototypeInjected') {
+        // unset injected value, so it will be used as source when used again
+        if (this.prototypeInjected.get(iid)) {
             receiver[offset] = undefined;
+            this.prototypeInjected.delete(iid);
         }
     }
 
@@ -383,9 +375,20 @@ export default class Analysis implements Analyzer {
         // eval always takes a single arg
     }
 
+    public startExpression: NPCallbacks.startExpression = (iid: number, type: string) => {
+    }
+
+    public endExpression: NPCallbacks.endExpression = (iid: number, type: string, result: any) => {
+        // Push binary operation on OR to propagate undefined property reads (e.g. x = obj.prop || ...)
+        if (type === "JSOr") {
+            this.state.binary([{
+                type: "expr",
+                location: parseIID(iid)
+            }]);
+        }
+    }
+
     public conditional: NPCallbacks.conditional = (iid: number, result: any) => {
-        // this.debugLogger.log(JSON.stringify(parseIID(iid)));
-        // this.debugLogger.log(JSON.stringify(result));
     }
 
     public endExecution: NPCallbacks.endExecution = () => {

@@ -18,7 +18,7 @@ const colors = require('colors/safe');
  * @param opts the options to give to exec
  * @returns {Promise}
  */
-const promise_exec = function(cmd, livePipe, opts) {
+const promise_exec = function (cmd, livePipe, opts) {
     return new Promise((resolve, reject) => {
         let child = child_process.exec(cmd, opts, (error, stdout, stderr) => {
             resolve([error, stdout, stderr]);
@@ -85,7 +85,7 @@ const DEFAULT_SPEC_PATH = `${TAINT_ANALYSIS_HOME}/ts/src/defaultSpec.json`;
  *             Specify that here with a RELATIVE PATH from the projectDir.
  * @returns {Promise<[RunSpecification, Array<Taint flows>]>}
  */
-exports.run = async function(projectDir, projectName, outputDir, consoleFlag, live, main) {
+exports.run = async function (projectDir, projectName, outputDir, consoleFlag, live, main) {
     let usingDefaultSpec = false;
     // Print out a pretty augur logo
 
@@ -181,6 +181,8 @@ exports.run = async function(projectDir, projectName, outputDir, consoleFlag, li
                 : "cd " + NODEPROF_HOME + "; "
                 + `export OUTPUT_FILE=\"${outputFile}\";`
                 + MX_HOME + "/mx jalangi --initParam outputFile:" + outputFile
+                // + " --debug" // show debug output
+                + " --scope module"
                 + " --initParam specPath:" + (projectDir + "/spec.json")
                 + " --initParam live:" + live
                 + " --analysis " + ANALYSIS + " "
@@ -237,13 +239,17 @@ ${JSON.stringify(results, (key, value) =>
 
         return [spec, results];
     } finally {
+        // always stop spinner
+        loadingSpinner.stop();
+
         // Here, if the user was using the default spec file, we need to delete the auto-generated one
         // before we crash.
 
         if (usingDefaultSpec) {
             try {
                 fs.unlinkSync(projectDir + "/spec.json")
-            } catch(e) {}
+            } catch (e) {
+            }
         }
     }
 }

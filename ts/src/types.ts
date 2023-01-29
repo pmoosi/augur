@@ -456,6 +456,8 @@ export interface RunSpecification extends Object {
     // The type of taint tracking to use for this analysis. Defaults to Boolean
     tracking?: TrackingType;
 
+    injectPropertyVal?: any;
+
     // Should we enable verbose logging?
     verbose?: boolean;
 
@@ -478,6 +480,7 @@ export interface RunSpecification extends Object {
 export const VALID_SPEC_FIELDS = [
     "main",
     "tracking",
+    "injectPropertyVal",
     "verbose",
     "sources",
     "sinks",
