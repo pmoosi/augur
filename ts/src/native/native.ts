@@ -183,6 +183,7 @@ let models = asNativeModelMap({
                            receiverName: DynamicDescription,
                            receiver: any,
                            args: any[],
+                           isMethod,
                            description: StaticDescription): boolean {
             return false;     
         },
@@ -238,6 +239,7 @@ let models = asNativeModelMap({
                            receiverName: DynamicDescription,
                            receiver: any,
                            args: any[],
+                           isMethod,
                            description: StaticDescription): boolean {
             // We need to know if we're calling toString on an Array vs.
             // something else, because Array.prototype.toString is special.
@@ -301,6 +303,7 @@ let models = asNativeModelMap({
                    receiverName: DynamicDescription,
                    receiver: any,
                    args: any[],
+                   isMethod: boolean,
                    description: StaticDescription): number {
             // record length of split string array. we need to do this
             // because the abstract machine will have no idea how many
@@ -347,6 +350,7 @@ let models = asNativeModelMap({
                    receiverName: DynamicDescription,
                    receiver: any,
                    args: any[],
+                   isMethod: boolean,
                    description: StaticDescription) => {
             // return receiver's length if it exists, otherwise 0
             return receiver.length || 0;
@@ -389,6 +393,7 @@ let models = asNativeModelMap({
                    receiverName: DynamicDescription,
                    receiver: any,
                    args: any[],
+                   isMethod,
                    description: StaticDescription) => {
 
         },
@@ -447,6 +452,7 @@ let models = asNativeModelMap({
                    receiverName: DynamicDescription,
                    receiver: any,
                    args: any[],
+                   isMethod,
                    description: StaticDescription) => {
             let [obj, prop, descriptor] = args;
 
@@ -487,6 +493,7 @@ let models = asNativeModelMap({
                    receiverName: DynamicDescription,
                    receiver: any,
                    args: any[],
+                   isMethod,
                    description: StaticDescription) => {
             /*
             // Record two things:
@@ -537,6 +544,7 @@ let models = asNativeModelMap({
              receiverName: DynamicDescription,
              receiver: any,
              args: any[],
+             isMethod,
              description: StaticDescription) => {
                 // our goal in this recorder is to determine *which*
                 // argument is the maximum. we can use this information at
@@ -611,6 +619,7 @@ let models = asNativeModelMap({
                    receiverName: DynamicDescription,
                    receiver: any,
                    args: any[],
+                   isMethod,
                    description: StaticDescription) => {
             // This refers to .then called on the returns of async functions.
             // Get the asyncID of the promise, and return it.

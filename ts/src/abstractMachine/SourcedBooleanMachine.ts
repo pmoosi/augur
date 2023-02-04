@@ -31,9 +31,9 @@ export default class SourcedBooleanMachine
         //
         // For now, we're going to take whichever source had the taint in the first place, which should work
         // out to be the actual source of the taint.
-        if (a.value && b.value) {
-            this.logger.error('How is this possible?');
-        }
+        // if (a.value && b.value) {
+        //     this.logger.error('How is this possible?');
+        // }
 
         let retSource;
         if (a.value) {

@@ -65,11 +65,10 @@ export default class Analysis implements Analyzer {
     // This means the isNative() will only need to be called once instead of twice when entering a new function.
     private isNativeMap: WeakMap<Invoked, boolean> = new WeakMap<Invoked, boolean>();
 
-    // Keeps track of whether or not we are in the main event loop. 
+    // Keeps track of whether or not we are in the main event loop.
     // NOTE: currently unused.
     private eventLoopOver: Boolean = false;
 
-    private debugLogger: MyLogger = new MyLogger('/home/pmoosi/Documents/KTH/2023-ss/thesis/simple/debug.log');
 
     private prototypeInjected: Map<number, boolean> = new Map();
 

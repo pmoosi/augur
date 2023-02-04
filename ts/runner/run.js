@@ -83,9 +83,10 @@ const DEFAULT_SPEC_PATH = `${TAINT_ANALYSIS_HOME}/ts/src/defaultSpec.json`;
  * @param main OPTIONAL. If you don't have your own spec file in this project, Augur can use a default spec file.
  *             However, in that case Augur still needs to know which JS file to execute.
  *             Specify that here with a RELATIVE PATH from the projectDir.
+ * @param outputFile OPTIONAL. Specifies a file to save the resulting flow instead of stdout
  * @returns {Promise<[RunSpecification, Array<Taint flows>]>}
  */
-exports.run = async function (projectDir, projectName, outputDir, consoleFlag, live, main) {
+exports.run = async function (projectDir, projectName, outputDir, consoleFlag, live, main, resultsFile) {
     let usingDefaultSpec = false;
     // Print out a pretty augur logo
 
@@ -182,7 +183,7 @@ exports.run = async function (projectDir, projectName, outputDir, consoleFlag, l
                 + `export OUTPUT_FILE=\"${outputFile}\";`
                 + MX_HOME + "/mx jalangi --initParam outputFile:" + outputFile
                 // + " --debug" // show debug output
-                + " --scope module"
+                // + " --scope module"
                 + " --initParam specPath:" + (projectDir + "/spec.json")
                 + " --initParam live:" + live
                 + " --analysis " + ANALYSIS + " "
@@ -231,9 +232,20 @@ exports.run = async function (projectDir, projectName, outputDir, consoleFlag, l
             if (results.length === 0) {
                 process.stdout.write(colors.green("No flows found.\n"));
             } else {
-                process.stdout.write(`${colors.red("Flows found into the following sinks:")}
-${JSON.stringify(results, (key, value) =>
-                    value instanceof Set ? [...value] : value, 4)}\n`);
+                const resultsJson = JSON.stringify(
+                    results,
+                    (key, value) => value instanceof Set ? [...value] : value,
+                    4
+                );
+                if (resultsFile) {
+                    try {
+                        fs.writeFileSync(resultsFile, resultsJson, {flag: 'w'});
+                    } catch (e) {
+                        process.stdout.write(`An error occurred while writing to results file ${resultsFile}: ${e}`);
+                    }
+                } else {
+                    process.stdout.write(`${colors.red("Flows found into the following sinks:")}\n\n${resultsJson}\n`);
+                }
             }
         }
 
