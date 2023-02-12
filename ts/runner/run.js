@@ -45,6 +45,7 @@ const TAINT_ANALYSIS_HOME =
 const NODEPROF_HOME = shell.env['NODEPROF_HOME'];
 const MX_HOME = shell.env['MX_HOME'];
 const JAVA_HOME = shell.env['JAVA_HOME'];
+const GRAAL_NODE_HOME = shell.env['GRAAL_NODE_HOME'];
 
 // If no NODEPROF_HOME was specified, Docker will be used instead.
 const SHOULD_USE_DOCKER = (NODEPROF_HOME === undefined)
@@ -183,11 +184,24 @@ exports.run = async function (projectDir, projectName, outputDir, consoleFlag, l
                 + `export OUTPUT_FILE=\"${outputFile}\";`
                 + MX_HOME + "/mx jalangi --initParam outputFile:" + outputFile
                 // + " --debug" // show debug output
-                // + " --scope module"
+                + " --scope module"
                 + " --initParam specPath:" + (projectDir + "/spec.json")
                 + " --initParam live:" + live
                 + " --analysis " + ANALYSIS + " "
                 + inputFile);
+
+        // const command =
+        //     "rm -f " + outputFile + "; " +
+        //     "cd " + NODEPROF_HOME + "; "
+        //     + `export OUTPUT_FILE=\"${outputFile}\";`
+        //     + `${GRAAL_NODE_HOME} --jvm --experimental-options --vm.Dtruffle.class.path.append=${NODEPROF_HOME}/build/nodeprof.jar --nodeprof ${NODEPROF_HOME}/src/ch.usi.inf.nodeprof/js/jalangi.js`
+        //     + ` --initParam outputFile: ${outputFile}`
+        //     // + " --debug" // show debug output
+        //     + " --nodeprof.Scope module"
+        //     + " --initParam specPath:" + (projectDir + "/spec.json")
+        //     + " --initParam live:" + live
+        //     + " --analysis " + ANALYSIS + " "
+        //     + inputFile;
 
         // console.log("Source file: \t" + inputFile);
         // console.log("Command: \t" + command);
@@ -239,6 +253,7 @@ exports.run = async function (projectDir, projectName, outputDir, consoleFlag, l
                 );
                 if (resultsFile) {
                     try {
+                        process.stdout.write(colors.red(`Flows found (see ${resultsFile})\n`));
                         fs.writeFileSync(resultsFile, resultsJson, {flag: 'w'});
                     } catch (e) {
                         process.stdout.write(`An error occurred while writing to results file ${resultsFile}: ${e}`);
