@@ -84,10 +84,11 @@ const DEFAULT_SPEC_PATH = `${TAINT_ANALYSIS_HOME}/ts/src/defaultSpec.json`;
  * @param main OPTIONAL. If you don't have your own spec file in this project, Augur can use a default spec file.
  *             However, in that case Augur still needs to know which JS file to execute.
  *             Specify that here with a RELATIVE PATH from the projectDir.
- * @param outputFile OPTIONAL. Specifies a file to save the resulting flow instead of stdout
+ * @param resultsFile OPTIONAL. Specifies the file path to write the result
+ * @param exclude OPTIONAL. array of keywords which when included in the path of file it is not instrumented
  * @returns {Promise<[RunSpecification, Array<Taint flows>]>}
  */
-exports.run = async function (projectDir, projectName, outputDir, consoleFlag, live, main, resultsFile) {
+exports.run = async function (projectDir, projectName, outputDir, consoleFlag, live, main, resultsFile = null, exclude = null) {
     let usingDefaultSpec = false;
     // Print out a pretty augur logo
 
@@ -188,20 +189,8 @@ exports.run = async function (projectDir, projectName, outputDir, consoleFlag, l
                 + " --initParam specPath:" + (projectDir + "/spec.json")
                 + " --initParam live:" + live
                 + " --analysis " + ANALYSIS + " "
+                + (exclude?.length ? " --excl " + exclude.join(',') + " " : "")
                 + inputFile);
-
-        // const command =
-        //     "rm -f " + outputFile + "; " +
-        //     "cd " + NODEPROF_HOME + "; "
-        //     + `export OUTPUT_FILE=\"${outputFile}\";`
-        //     + `${GRAAL_NODE_HOME} --jvm --experimental-options --vm.Dtruffle.class.path.append=${NODEPROF_HOME}/build/nodeprof.jar --nodeprof ${NODEPROF_HOME}/src/ch.usi.inf.nodeprof/js/jalangi.js`
-        //     + ` --initParam outputFile: ${outputFile}`
-        //     // + " --debug" // show debug output
-        //     + " --nodeprof.Scope module"
-        //     + " --initParam specPath:" + (projectDir + "/spec.json")
-        //     + " --initParam live:" + live
-        //     + " --analysis " + ANALYSIS + " "
-        //     + inputFile;
 
         // console.log("Source file: \t" + inputFile);
         // console.log("Command: \t" + command);
