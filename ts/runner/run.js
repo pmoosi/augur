@@ -62,6 +62,7 @@ if (SHOULD_USE_DOCKER) {
 }
 
 const ANALYSIS = TAINT_ANALYSIS_HOME + "/ts/dist/src/analysis/nodeprofAnalysis.js";
+// const ANALYSIS = TAINT_ANALYSIS_HOME + "/../empty-analysis.js";
 const DEFAULT_SPEC_PATH = `${TAINT_ANALYSIS_HOME}/ts/src/defaultSpec.json`;
 
 // For debugging purposes, if you want to make sure NodeProf runs on the application.
@@ -166,38 +167,57 @@ exports.run = async function (projectDir, projectName, outputDir, consoleFlag, l
         const DOCKER_OUTPUT_FILENAME = "analysis.output";
 
         // The command to instrument the test's JS code
+        // const command =
+        //     "rm -f " + outputFile + "; " +
+        //     (SHOULD_USE_DOCKER
+        //         // Run project using Docker
+        //         ? TAINT_ANALYSIS_HOME + "/ts/docker-nodeprof/docker-analyze.sh" +
+        //         ` --mxArg "--initParam outputFile:/root/program/${DOCKER_OUTPUT_FILENAME}"` +
+        //         ` --mxArg "--initParam live:${live}"` +
+        //         ` --mxArg "--initParam specPath:/root/program/spec.json"` +
+        //         " --analysisDir " + TAINT_ANALYSIS_HOME + "/ts/" +
+        //         " --analysisMain " + "dist/src/analysis/nodeprofAnalysis.js" +
+        //         " --programDir " + projectDir + "/" +
+        //         " --programMain " + spec.main + ";" +
+        //         "mv " + projectDir + "/" + DOCKER_OUTPUT_FILENAME +
+        //         " " + outputFile
+        //         // Run project using local NodeProf installation
+        //         : "cd " + NODEPROF_HOME + "; "
+        //         + `export OUTPUT_FILE=\"${outputFile}\";`
+        //         + MX_HOME + "/mx jalangi --initParam outputFile:" + outputFile
+        //         // + " --debug" // show debug output
+        //         + " --scope module"
+        //         + " --initParam specPath:" + (projectDir + "/spec.json")
+        //         + " --initParam live:" + live
+        //         + " --analysis " + ANALYSIS + " "
+        //         + (exclude?.length ? " --excl " + exclude.join(',') + " " : "")
+        //         + inputFile);
+
         const command =
-            "rm -f " + outputFile + "; " +
-            (SHOULD_USE_DOCKER
-                // Run project using Docker
-                ? TAINT_ANALYSIS_HOME + "/ts/docker-nodeprof/docker-analyze.sh" +
-                ` --mxArg "--initParam outputFile:/root/program/${DOCKER_OUTPUT_FILENAME}"` +
-                ` --mxArg "--initParam live:${live}"` +
-                ` --mxArg "--initParam specPath:/root/program/spec.json"` +
-                " --analysisDir " + TAINT_ANALYSIS_HOME + "/ts/" +
-                " --analysisMain " + "dist/src/analysis/nodeprofAnalysis.js" +
-                " --programDir " + projectDir + "/" +
-                " --programMain " + spec.main + ";" +
-                "mv " + projectDir + "/" + DOCKER_OUTPUT_FILENAME +
-                " " + outputFile
-                // Run project using local NodeProf installation
-                : "cd " + NODEPROF_HOME + "; "
-                + `export OUTPUT_FILE=\"${outputFile}\";`
-                + MX_HOME + "/mx jalangi --initParam outputFile:" + outputFile
-                // + " --debug" // show debug output
-                + " --scope module"
-                + " --initParam specPath:" + (projectDir + "/spec.json")
-                + " --initParam live:" + live
-                + " --analysis " + ANALYSIS + " "
-                + (exclude?.length ? " --excl " + exclude.join(',') + " " : "")
-                + inputFile);
+            `rm -f ${outputFile};` +
+            ` cd  ${projectDir};` +
+            ` export OUTPUT_FILE=\"${outputFile}\";` +
+            ' ' + GRAAL_NODE_HOME +
+            ' --jvm' +
+            ' --experimental-options' +
+            ` --vm.Dtruffle.class.path.append=${NODEPROF_HOME}/build/nodeprof.jar` +
+            ' --nodeprof.Scope=module' +
+            (exclude?.length ? ' --nodeprof.ExcludeSource=' + exclude.join(',') : '') +
+            ` --nodeprof ${NODEPROF_HOME}/src/ch.usi.inf.nodeprof/js/jalangi.js ` +
+            ` --analysis ${ANALYSIS}` +
+            ' --initParam outputFile:' + outputFile +
+            ' --initParam specPath:' + (projectDir + '/spec.json') +
+            ' --initParam live:' + live +
+            ' ' + inputFile
 
         // console.log("Source file: \t" + inputFile);
-        // console.log("Command: \t" + command);
+        console.log("Command: \t" + command);
 
         // Print status message
         process.stdout.write(`${colors.yellow("Instrumenting code")}\n  =>  ${inputFile}...\n`);
-        loadingSpinner.start();
+        if (!consoleFlag) {
+            loadingSpinner.start();
+        }
 
         let results;
         if (live) {
@@ -208,22 +228,22 @@ exports.run = async function (projectDir, projectName, outputDir, consoleFlag, l
             return [spec, results];
         } else {
             // Offline.
-            let [error, stdout, stderr] = await promise_exec(command, false,
+            let [error, stdout, stderr] = await promise_exec(command, consoleFlag,
                 {maxBuffer: 10 * 10 * 1024 * 1024 * 10 /* 10*10*10 MB buffer for stdout/stderr */});
 
             loadingSpinner.stop();
             process.stdout.write(colors.green(`done!\n\n`));
 
-            if (consoleFlag) {
-                process.stdout.write(`${colors.yellow("stdout")} from program:\n`)
-                process.stdout.write(stdout + "\n");
-                process.stdout.write(`${colors.red("stderr")} from program:\n`)
-                process.stdout.write(stderr + "\n");
-
-                if (error) {
-                    console.error(error);
-                }
-            }
+            // if (consoleFlag) {
+            //     process.stdout.write(`${colors.yellow("stdout")} from program:\n`)
+            //     process.stdout.write(stdout + "\n");
+            //     process.stdout.write(`${colors.red("stderr")} from program:\n`)
+            //     process.stdout.write(stderr + "\n");
+            //
+            //     if (error) {
+            //         console.error(error);
+            //     }
+            // }
 
             process.stdout.write(`${colors.yellow("Inspecting taints with the specification:")}\n  => ${specPath}...\n`);
             loadingSpinner.start();

@@ -25,7 +25,7 @@ export default class WeakMapShadow implements ShadowMemory {
 
     private stack: Array<[DynamicDescription, Array<RawVariableDescription>]> =
         [["global" as DynamicDescription, []]];
-
+    
     private tree: Map<number, Array<[DynamicDescription, Array<RawVariableDescription>]>> = new Map<number, Array<[DynamicDescription, Array<RawVariableDescription>]>>()
     private ROOTID: number = 0;
 
